@@ -21,13 +21,17 @@ public class UserController {
     public List<User> search() { return  service.search(); }
 
     @PostMapping
-    public ResponseEntity<String > create(@RequestHeader(value ="Authorization") String token, @RequestBody User newUser) { return service.create(newUser, null);}
+    public ResponseEntity<String > create(@RequestBody User newUser) {
+        return service.create(newUser);}
 
     @PostMapping (value = "/login")
     public ResponseEntity<String> login(@RequestBody User newUser) { return service.login(newUser);}
-    @PutMapping
-    public ResponseEntity<String> update(@RequestHeader(value ="Authorization") String token, @RequestBody User newUser) {return service.create(newUser, token);}
 
+
+   @PutMapping
+    public ResponseEntity<String> update(@RequestHeader(value ="Authorization") String token,
+                                         @RequestBody User newUser) {
+        return service.update(newUser, token);}
 
 
     @DeleteMapping(value="/{id}")
