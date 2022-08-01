@@ -18,7 +18,7 @@ public class UserController {
     private UserService service;
 
     @GetMapping
-    public List<User> search() { return  service.search(); }
+    public ResponseEntity<String> search(@RequestHeader(value = "Authorization") String token) { return (ResponseEntity<String>) service.search(token); }
 
     @PostMapping
     public ResponseEntity<String > create(@RequestBody User newUser) {
@@ -35,6 +35,6 @@ public class UserController {
 
 
     @DeleteMapping(value="/{id}")
-    public void delete(@PathVariable("id") Long id) {service.delete(id);
+    public ResponseEntity<String> delete(@RequestHeader (value = "Authorization") String token, @PathVariable("id") Long id) { return service.delete(token, id);
     }
 }

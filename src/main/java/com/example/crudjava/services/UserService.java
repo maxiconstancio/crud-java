@@ -4,15 +4,13 @@ import com.example.crudjava.models.User;
 import com.example.crudjava.repositories.UserRepository;
 import com.example.crudjava.utils.HashUtil;
 import com.example.crudjava.utils.JWTUtil;
-import de.mkammerer.argon2.Argon2;
-import de.mkammerer.argon2.Argon2Factory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.StandardReflectionParameterNameDiscoverer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -27,7 +25,23 @@ public class UserService {
     @Autowired
     private HashUtil hash;
 
-    public List<User> search() { return (List<User>) repository.findAll();}
+    public ResponseEntity search(String token) {
+
+
+            try {
+                String role = jwtUtil.getValue(token);
+                if (role.equals("1")) {
+
+                    return ResponseEntity.status(HttpStatus.OK).body((List<User>) repository.findAll());
+                }
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid Token");
+            }
+
+    }
+
+
 
 
     public ResponseEntity<String>  create(User newUser) {
@@ -43,7 +57,21 @@ public class UserService {
 
     }
 
-    public void delete(Long id) { repository.deleteById(id);}
+    public ResponseEntity<String> delete(String token, Long id) {
+        Optional<User> user = repository.findById(id);
+        if (!user.isPresent()) {
+
+
+            if (jwtUtil.getValue(token).equals("1") || String.valueOf(id).equals(jwtUtil.getKey(token))) {
+                repository.deleteById(id);
+                return ResponseEntity.status(HttpStatus.GONE).body("Deleted Successfully");
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+    }
+
+
 
     public ResponseEntity<String> login(User newUser) {
 
@@ -62,10 +90,10 @@ public class UserService {
 
     public ResponseEntity<String> update(User newUser, String token) {
         List<User> user = repository.findUser(newUser.getEmail());
-        String role ="";
-        if (token != null){
+
+
             try {
-                role = jwtUtil.getValue(token);
+                String role = jwtUtil.getValue(token);
                 if (role.equals("1") || user.get(0).getEmail().equals(newUser.getEmail()) ) {
                     newUser.setPassword(hash.passHash(newUser.getPassword()));
                     repository.save(newUser);
@@ -79,6 +107,4 @@ public class UserService {
         }
 
 
-       return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Token is required");
-    }
 }
