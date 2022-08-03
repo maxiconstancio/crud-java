@@ -59,8 +59,11 @@ public class UserService {
 
     public ResponseEntity<String> delete(String token, Long id) {
         Optional<User> user = repository.findById(id);
-        if (!user.isPresent()) {
 
+        if (user.isPresent()) {
+            if (jwtUtil.getKey(token).equals(String.valueOf(id))){
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("User in use");
+            }
 
             if (jwtUtil.getValue(token).equals("1") || String.valueOf(id).equals(jwtUtil.getKey(token))) {
                 repository.deleteById(id);
